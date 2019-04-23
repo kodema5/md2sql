@@ -6,9 +6,9 @@ const Path = require('path')
 Args
     .version('0.0.1', '-v, --version')
     .usage('[options] <dir...>')
-    .option('-d, --destination [dir]', 'destination dir', '.sql')
+    .option('-d, --destination [dir]', 'destination dir', 'src')
     .option('-e, --extension [file-extension]', 'destination file-extension', '.sql')
-    .option('-f, --force', 'parse all, not just newer files')
+    .option('-f, --force', 'clears target directory, parse all, not just newer files')
     .option('-i, --ignore [folder]', 'ignore folders', (s,m) => m.concat(s.split(',')), ['node_modules'])
     .option('-m, --md-extension [file-extension]', 'source file-extension', '.md')
     .option('-p, --prefix [prefix]', 'bird-style prefix to indicate code', '> ')
@@ -105,7 +105,8 @@ Args.args = Args.args.length > 0 ? Args.args : ['.']
 ;(async () => {
 
     let dir = Args.destination
-    if (!Fs.existsSync(dir)) { Fs.mkdirSync(dir) }
+    if (Args.force) rmdirSync(dir)
+    if (!Fs.existsSync(dir)) Fs.mkdirSync(dir)
 
     let n = 0
     for (let a of Args.args) {
@@ -117,3 +118,16 @@ Args.args = Args.args.length > 0 ? Args.args : ['.']
     // if (files.filter(Boolean).length==0) return
 })()
 
+function rmdirSync(dir) {
+    if (!Fs.existsSync(dir)) return
+
+    Fs.readdirSync(dir).forEach((e) => {
+        let p = Path.join(dir, e)
+        if (Fs.lstatSync(p).isDirectory()) {
+            rmdirSync(p)
+        } else {
+            Fs.unlinkSync(p)
+        }
+    })
+    Fs.rmdirSync(dir)
+}
