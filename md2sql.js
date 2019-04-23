@@ -129,5 +129,5 @@ function rmdirSync(dir) {
             Fs.unlinkSync(p)
         }
     })
-    Fs.rmdirSync(dir)
+    try { Fs.rmdirSync(dir) } catch(e) {}
 }
