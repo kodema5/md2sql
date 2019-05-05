@@ -7,7 +7,7 @@ Args
     .version('0.0.1', '-v, --version')
     .usage('[options] <dir...>')
     .option('-d, --destination [dir]', 'destination dir', 'src')
-    .option('-e, --extension [file-extension]', 'destination file-extension', '.sql')
+    .option('-e, --extension [file-extension]', 'default destination file-extension', '.sql')
     .option('-f, --force', 'clears target directory, parse all, not just newer files')
     .option('-i, --ignore [folder]', 'ignore folders', (s,m) => m.concat(s.split(',')), ['node_modules'])
     .option('-m, --md-extension [file-extension]', 'source file-extension', '.md')
@@ -84,17 +84,17 @@ async function processFiles(dir, extNames) {
     let files = await getFiles(dir)
     let ps = []
     for (let fn in files) {
-        if (extNames.indexOf(Path.extname(fn))<0) continue
+        if (Path.extname(fn)!==Args.mdExtension) continue
 
-
-        let fn_sql = Path.join(Args.destination,
-            fn.split('.').slice(0, -1).join('.') + Args.extension)
+        let p = Path.parse(fn)
+        let fn_ext = Path.join(Args.destination, p.dir,
+            Path.extname(p.name) ? p.name : p.name + Args.extension)
 
         if (!Args.force
-            && files[fn_sql]
-            && files[fn_sql].mtimeMs > files[fn].mtimeMs) continue
+            && files[fn_ext]
+            && files[fn_ext].mtimeMs > files[fn].mtimeMs) continue
 
-        ps.push(processFile(fn, fn_sql, (f) => f ? console.log('-', f) : null))
+        ps.push(processFile(fn, fn_ext, (f) => f ? console.log('-', f) : null))
     }
     return Promise.all(ps)
 }
