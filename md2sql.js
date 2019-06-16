@@ -11,10 +11,8 @@ Args
     .option('-f, --force', 'clears target directory, parse all, not just newer files')
     .option('-i, --ignore [folder]', 'ignore folders', (s,m) => m.concat(s.split(',')), ['node_modules'])
     .option('-m, --md-extension [file-extension]', 'source file-extension', '.md')
-    .option('-p, --prefix [prefix]', 'bird-style prefix to indicate code', '> ')
     .parse(process.argv)
 
-Args.prefixLength = Args.prefix.length
 
 async function getFiles(dir) {
 
@@ -56,6 +54,9 @@ async function getFiles(dir) {
 }
 
 
+const prefix = '> '
+const prefixLength = prefix.length
+
 async function processFile(fn, fn_sql, onWrite) {
     return new Promise( (done, cancel) => {
         Fs.readFile(fn, async function (err, txt)  {
@@ -63,7 +64,16 @@ async function processFile(fn, fn_sql, onWrite) {
 
             txt = txt.toString()
                 .split('\n')
-                .map((s) => s.slice(0,Args.prefixLength)==Args.prefix ? s.slice(Args.prefixLength) : (''))
+                .map((s) => {
+                    let t = s.slice(0, prefixLength)
+                    if (t!==prefix) return ''
+
+                    if (s[prefixLength] === ' ') {
+                        return ' ' + s.slice(1)
+                    }
+
+                    return s.slice(prefixLength)
+                })
                 .join('\n')
 
             if (txt.trim().length==0) return done()
